@@ -24,16 +24,16 @@ Parameters (in this order):
  * Path to output file (it will be created or replaced by this process)
  * IRI for the resulting ontology
 
- ## About the conversion
+## About the conversion
 
  The process generates the following OWL artifacts in the ontology:
 
-  * Class declarations for all concepts
-  * SubclassOf or EquivalentClass Axioms for the concept definitions
-  * ObjectProperty declarations, including SubPropertyOf for Role hierarchies
-  * Non groupable attributes are managed in a special way to nerver add them in a Relationship Group
-    * *Part of*
-    * *Has active ingredient*
-    * *Laterality*
-    * *Has dose form*
-  * A sub-property chain is created between *Direct substance* and *Has active ingredient*
+ * Class declarations for all concepts
+ * SubclassOf or EquivalentClass Axioms for the concept definitions
+ * ObjectProperty declarations, including SubPropertyOf for Role hierarchies
+ * Non groupable attributes are managed in a special way to nerver add them in a Relationship Group
+   * *Part of*
+   * *Has active ingredient*
+   * *Laterality*
+   * *Has dose form*
+ * A sub-property chain is created between *Direct substance* and *Has active ingredient*
