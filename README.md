@@ -10,6 +10,8 @@ Clone and build with:
 
 This will generate the executable JAR file: owl-test-x.x.x-SNAPSHOT-jar-with-dependencies.jar
 
+Binaries are also available in the releases section of the [github repository](https://github.com/termMed/rf2-to-owl/releases).
+
 ## Executing the conversion
 
 Run the executable from the command line, for example:
