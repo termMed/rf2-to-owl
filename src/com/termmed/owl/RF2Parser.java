@@ -32,7 +32,7 @@ import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
 import com.termmed.rf2.model.ConceptDescriptor;
 import com.termmed.rf2.model.LightRelationship;
 
-public class ParseOWL {
+public class RF2Parser {
 
 	private Map<Long, ConceptDescriptor> concepts;
 	private Map<Long, HashMap<Integer, List<LightRelationship>>> relationships;
@@ -57,8 +57,8 @@ public class ParseOWL {
 	private String outputFile;
 	private String iri;
 	
-	public ParseOWL(String conceptFile, String relationshipFile,
-			String outputFile, String iri) {
+	public RF2Parser(String conceptFile, String relationshipFile,
+					 String outputFile, String iri) {
 		super();
 		this.conceptFile = conceptFile;
 		this.relationshipFile = relationshipFile;
