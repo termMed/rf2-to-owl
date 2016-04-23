@@ -24,19 +24,41 @@ package com.termmed.owl;
  */
 public class Runner {
 
-    public static void main(String[] args) throws Exception {
+	/**
+	 * The main method.
+	 *
+	 * @param args the arguments
+	 * @throws Exception the exception
+	 */
+	public static void main(String[] args) throws Exception {
 
-        if (args.length != 4)
-            throw new IllegalArgumentException("Arguments error, required: conceptsFile relationshipsFile outputFile iri");
+		if (args.length < 4)
+			throw new IllegalArgumentException("Arguments error, required: conceptsFile relationshipsFile outputFile iri [descriptionFile languageFile [textDefinitionFile]]");
 
-        String conceptFile = args[0];
-        String relationshipFile = args[1];
-        String outputFile = args[2];
-        String iri = args[3];
+		String conceptFile = args[0];
+		String relationshipFile = args[1];
+		String outputFile = args[2];
+		String iri = args[3];
+		String descriptionFile = null;
+		String languageFile = null;
+		String textDefinitionFile = null;
+		if (args.length>=6){
+			descriptionFile = args[4];
+			languageFile = args[5];
+		}
+		if (args.length>=7){
+			textDefinitionFile = args[6];
+		}
+		RF2Parser parser = new RF2Parser(conceptFile
+				, relationshipFile
+				, descriptionFile
+				,textDefinitionFile
+				,languageFile
+				, outputFile
+				, iri);
 
-        RF2Parser parser = new RF2Parser(conceptFile, relationshipFile, outputFile, iri);
-        parser.parse();
-        System.out.println("Done! The process has generated a new OWL Ontology file: " + outputFile);
-    }
+		parser.parse();
+		System.out.println("Done! The process has generated a new OWL Ontology file: " + outputFile);
+	}
 
 }
