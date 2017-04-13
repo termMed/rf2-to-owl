@@ -19,26 +19,72 @@
 
 package com.termmed.rf2.model;
 
+/**
+ * The Class ConceptDescriptor.
+ *
+ * @author Alejandro Rodriguez
+ */
 public class ConceptDescriptor extends Component{
 
+	/** The concept id. */
 	Long conceptId;
+	
+	/** The default term. */
 	String defaultTerm;
+    
+    /** The definition status. */
     String definitionStatus;
+	
+	/**
+	 * Gets the concept id.
+	 *
+	 * @return the concept id
+	 */
 	public Long getConceptId() {
 		return conceptId;
 	}
+	
+	/**
+	 * Sets the concept id.
+	 *
+	 * @param conceptId the new concept id
+	 */
 	public void setConceptId(Long conceptId) {
 		this.conceptId = conceptId;
 	}
+	
+	/**
+	 * Gets the default term.
+	 *
+	 * @return the default term
+	 */
 	public String getDefaultTerm() {
 		return defaultTerm;
 	}
+	
+	/**
+	 * Sets the default term.
+	 *
+	 * @param defaultTerm the new default term
+	 */
 	public void setDefaultTerm(String defaultTerm) {
 		this.defaultTerm = defaultTerm;
 	}
+	
+	/**
+	 * Gets the definition status.
+	 *
+	 * @return the definition status
+	 */
 	public String getDefinitionStatus() {
 		return definitionStatus;
 	}
+	
+	/**
+	 * Sets the definition status.
+	 *
+	 * @param definitionStatus the new definition status
+	 */
 	public void setDefinitionStatus(String definitionStatus) {
 		this.definitionStatus = definitionStatus;
 	}
