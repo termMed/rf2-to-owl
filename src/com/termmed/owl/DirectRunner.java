@@ -42,7 +42,7 @@ public class DirectRunner {
         String iri = "http://snomed.info/id/";
 
         RF2Parser parser = new RF2Parser(conceptFile, relationshipFile,
-        		descriptionFile,textDefinitionFile,languageFile, outputFile,iri, true);
+        		descriptionFile,textDefinitionFile,languageFile, outputFile,iri, true, true);
 //        RF2Parser parser = new RF2Parser(conceptFile, relationshipFile,
 //        		null,null,null, outputFile,iri);
         parser.parse();

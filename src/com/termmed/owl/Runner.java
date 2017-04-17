@@ -40,7 +40,7 @@ public class Runner {
         Boolean useConcreteDomains = (args[7].equals("TRUE"));
 
         RF2Parser parser = new RF2Parser(conceptFile, relationshipFile,
-                descriptionFile,null,languageFile, outputFile,iri, useConcreteDomains);
+                descriptionFile,null,languageFile, outputFile,iri, useConcreteDomains, false);
         //RF2Parser parser = new RF2Parser(conceptFile, relationshipFile, outputFile, iri);
         //parser.parse();
         System.out.println("Done! The process has generated a new OWL Ontology file: " + outputFile);

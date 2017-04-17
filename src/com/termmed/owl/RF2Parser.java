@@ -19,12 +19,7 @@
 
 package com.termmed.owl;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -148,6 +143,9 @@ public class RF2Parser {
 	private String prefix;
 
 	private Boolean useConcreteDomains;
+
+	private Boolean generateOwlRefset;
+
 	/**
 	 * Instantiates a new r f2 parser.
 	 *
@@ -159,10 +157,11 @@ public class RF2Parser {
 	 * @param outputFile the output file
 	 * @param iri the iri
  	 * @param useConcreteDomains whether to use concrete domains
+	 * @param generateOwlRefset whether to generate Owl Refset
 	 */
 	public RF2Parser(String conceptFile, String relationshipFile, String descriptionFile,
 			String textDefinitionFile,String languageFile,
-			String outputFile, String iri, Boolean useConcreteDomains) {
+			String outputFile, String iri, Boolean useConcreteDomains, boolean generateOwlRefset) {
 		super();
 		this.conceptFile = conceptFile;
 		this.relationshipFile = relationshipFile;
@@ -170,6 +169,7 @@ public class RF2Parser {
 		this.textDefinitionFile=textDefinitionFile;
 		this.languageFile=languageFile;
 		this.useConcreteDomains=useConcreteDomains;
+		this.generateOwlRefset = generateOwlRefset;
 
 		this.outputFile = outputFile;
 		this.prefix=iri;
@@ -214,8 +214,13 @@ public class RF2Parser {
 				.create(prefix + ROLEGROUPSCTID));	
 		HashMap <Integer,List<LightRelationship>> listLR = new HashMap<Integer,List<LightRelationship>>();
 		List<LightRelationship> listIsas = new ArrayList<LightRelationship>();
-
+		System.out.println("Starting Owl File Generation");
+		int count = 0;
 		for (Long cptId : concepts.keySet()) {
+			count++;
+			if (count % 15000 == 0) {
+				System.out.print(".");
+			}
 			if (hashRoles.containsKey(cptId)){
 				continue;
 			}
@@ -288,6 +293,12 @@ public class RF2Parser {
 
 		
 		manager.saveOntology(ont, new OWLXMLDocumentFormat(), documentIRI);
+		if (this.generateOwlRefset) {
+			RF2OwlRefsetRenderer refsetRenderer = new RF2OwlRefsetRenderer();
+			PrintWriter refsetWriter = new PrintWriter("owlRefset.txt", "UTF-8");
+			refsetRenderer.render(ont, refsetWriter);
+			refsetWriter.close();
+		}
 		manager.removeOntology(ont);
 		System.gc();
 
@@ -328,7 +339,7 @@ public class RF2Parser {
 					}
 				}
 				System.out.println(".");
-				System.out.println("Descriptions loaded = " + count);
+				System.out.println("Descriptions and Acceptablities loaded = " + count);
 				br.close();
 
 				br = new BufferedReader(new InputStreamReader(new FileInputStream(descriptionFile), "UTF8"));
