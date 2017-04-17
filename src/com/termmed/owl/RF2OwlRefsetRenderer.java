@@ -98,7 +98,7 @@ public class RF2OwlRefsetRenderer {
                 refsetId = "733073007";
             }
             String referencedComponentId = new Scanner(body).useDelimiter("\\D+").next();
-            String moduleId = "900000000000207008";
+            String moduleId = "733073007";
             String row = UUID.randomUUID() + "\t" +
                     "20170731" + "\t1\t" + moduleId + "\t" +
                     refsetId + "\t" + referencedComponentId + "\t" +
