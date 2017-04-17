@@ -19,12 +19,7 @@
 
 package com.termmed.owl;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,23 +28,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
+import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
@@ -159,6 +141,11 @@ public class RF2Parser {
 	private Short shortAcceptable=3;
 
 	private String prefix;
+
+	private Boolean useConcreteDomains;
+
+	private Boolean generateOwlRefset;
+
 	/**
 	 * Instantiates a new r f2 parser.
 	 *
@@ -169,16 +156,20 @@ public class RF2Parser {
 	 * @param languageFile the language file
 	 * @param outputFile the output file
 	 * @param iri the iri
+ 	 * @param useConcreteDomains whether to use concrete domains
+	 * @param generateOwlRefset whether to generate Owl Refset
 	 */
 	public RF2Parser(String conceptFile, String relationshipFile, String descriptionFile,
 			String textDefinitionFile,String languageFile,
-			String outputFile, String iri) {
+			String outputFile, String iri, Boolean useConcreteDomains, boolean generateOwlRefset) {
 		super();
 		this.conceptFile = conceptFile;
 		this.relationshipFile = relationshipFile;
 		this.descriptionFile=descriptionFile;
 		this.textDefinitionFile=textDefinitionFile;
 		this.languageFile=languageFile;
+		this.useConcreteDomains=useConcreteDomains;
+		this.generateOwlRefset = generateOwlRefset;
 
 		this.outputFile = outputFile;
 		this.prefix=iri;
@@ -208,7 +199,6 @@ public class RF2Parser {
 	OWLOntologyStorageException, FileNotFoundException, IOException{
 		loadConceptsFile(new File(conceptFile));
 		loadIsaRelationshipsFile(new File(relationshipFile));
-		loadRelationshipsFile(new File(relationshipFile));
 
 		manager = OWLManager.createOWLOntologyManager();
 		ontologyIRI = IRI.create(iri);
@@ -218,13 +208,19 @@ public class RF2Parser {
 		addRoles();
 		loadDescriptionsFile(descriptionFile,textDefinitionFile, languageFile);
 		System.out.println("Attribute count:" + attributes.size());
+		loadRelationshipsFile(new File(relationshipFile));
 
 		roleGroupProp=factory.getOWLObjectProperty(IRI
 				.create(prefix + ROLEGROUPSCTID));	
 		HashMap <Integer,List<LightRelationship>> listLR = new HashMap<Integer,List<LightRelationship>>();
 		List<LightRelationship> listIsas = new ArrayList<LightRelationship>();
-
+		System.out.println("Starting Owl File Generation");
+		int count = 0;
 		for (Long cptId : concepts.keySet()) {
+			count++;
+			if (count % 15000 == 0) {
+				System.out.print(".");
+			}
 			if (hashRoles.containsKey(cptId)){
 				continue;
 			}
@@ -296,7 +292,13 @@ public class RF2Parser {
 // Manchester sintax process*********************************
 
 		
-		manager.saveOntology(ont, new RDFXMLOntologyFormat(), documentIRI);
+		manager.saveOntology(ont, new OWLXMLDocumentFormat(), documentIRI);
+		if (this.generateOwlRefset) {
+			RF2OwlRefsetRenderer refsetRenderer = new RF2OwlRefsetRenderer();
+			PrintWriter refsetWriter = new PrintWriter("owlRefset.txt", "UTF-8");
+			refsetRenderer.render(ont, refsetWriter);
+			refsetWriter.close();
+		}
 		manager.removeOntology(ont);
 		System.gc();
 
@@ -323,13 +325,21 @@ public class RF2Parser {
 				br.readLine();
 				String line;
 				String[] spl;
+				System.out.println("Starting descriptions from " + descFile.getName());
+				int count = 0;
 				while ((line=br.readLine())!=null){
+					count++;
 					spl=line.split("\t",-1);
 					if (spl[2].equals("1") && spl[4].equals(EN_LANGUAGE_REFSET) ){
-
+							
 						lang.put(Long.parseLong(spl[5]),(spl[6].equals(PREFERRED_ACCEPTABILITY)?shortPreferred:shortAcceptable));
 					}
+					if (count % 100000 == 0) {
+						System.out.print(".");
+					}
 				}
+				System.out.println(".");
+				System.out.println("Descriptions and Acceptablities loaded = " + count);
 				br.close();
 
 				br = new BufferedReader(new InputStreamReader(new FileInputStream(descriptionFile), "UTF8"));
@@ -338,9 +348,17 @@ public class RF2Parser {
 				Long did;
 				while ((line=br.readLine())!=null){
 					spl=line.split("\t",-1);
+					if (spl[6].equals("900000000000003001") && spl[2].equals("1")) {
+						if (concepts.containsKey(Long.parseLong(spl[4]))) {
+							concepts.get(Long.parseLong(spl[4])).setDefaultTerm(spl[7]);
+						}
+					}
 					did=Long.parseLong(spl[0]);
-					if (spl[2].equals("1") 
-							&& lang.containsKey(did)){
+//					if (spl[2].equals("1") 
+//							&& lang.containsKey(did) ){
+						if (spl[2].equals("1") 
+								&& lang.containsKey(did) 
+								&&  spl[6].equals(FSN_TYPE)){
 
 						cid=Long.parseLong(spl[4]);
 						if ( concepts.containsKey(cid) || hashRoles.containsKey(cid)){
@@ -376,6 +394,8 @@ public class RF2Parser {
 				}
 				br.close();
 				if (textDefinition!=null ){
+					DefaultPrefixManager pm=new DefaultPrefixManager();
+					pm.setDefaultPrefix("TextDefinition.term");
 					File txtDFile = new File(textDefinition);
 					if (txtDFile.exists() && txtDFile.exists()){
 						br = new BufferedReader(new InputStreamReader(new FileInputStream(txtDFile), "UTF8"));
@@ -389,21 +409,18 @@ public class RF2Parser {
 								cid=Long.parseLong(spl[4]);
 								if ( concepts.containsKey(cid)
 										&& !hashRoles.containsKey(cid)){
-
 									IRI cptIri = IRI.create(prefix + cid);
 									OWLDatatypeImpl dtt=new OWLDatatypeImpl(OWL2Datatype.RDF_PLAIN_LITERAL.getIRI());
 									OWLAnnotationProperty propA ;
 									if ( spl[6].equals(TEXT_DEFINITION_TYPE)){
-										propA = factory.getOWLAnnotationProperty("sctf:","TextDefinition.term");
+										propA = factory.getOWLAnnotationProperty("sctf:",pm);
 									}else{
 										continue;
 									}
 									OWLAnnotation annotation = factory.getOWLAnnotation(propA,new OWLLiteralImpl(spl[7],"en",dtt));
 									OWLAnnotationAssertionAxiom axiom = factory.getOWLAnnotationAssertionAxiom(cptIri, annotation);
 									manager.addAxiom(ont, axiom);
-
 								}
-
 							}
 						}
 						lang=null;
@@ -429,10 +446,21 @@ public class RF2Parser {
 			if (grp==0){
 				listR=listLR.get(0);
 				for (LightRelationship lrel:listR){
-
-					OWLClass targetClass = factory.getOWLClass(IRI.create(prefix + lrel.getTarget()));
-					OWLObjectProperty property= hashRoles.get(lrel.getType());
-					OWLClassExpression role=factory.getOWLObjectSomeValuesFrom(property, targetClass);
+					OWLClassExpression role;
+					if (useConcreteDomains &&
+							(lrel.getType().equals(732946004l) || lrel.getType().equals(732944001l) )) {
+						String value = concepts.get(lrel.getTarget()).getDefaultTerm().replaceAll("[^0-9?!\\.]","");
+						OWLDataProperty property= factory.getOWLDataProperty(IRI
+								.create("id/" + lrel.getType()));
+						role=factory.getOWLDataHasValue(property.asDataPropertyExpression(), factory.getOWLLiteral(Float.parseFloat(value)));
+					} else {
+						OWLClass targetClass = factory.getOWLClass(IRI.create("id/" + lrel.getTarget()));
+						OWLObjectProperty property= hashRoles.get(lrel.getType());
+						role=factory.getOWLObjectSomeValuesFrom(property, targetClass);
+					}
+//					OWLClass targetClass = factory.getOWLClass(IRI.create(prefix + lrel.getTarget()));
+//					OWLObjectProperty property= hashRoles.get(lrel.getType());
+//					OWLClassExpression role=factory.getOWLObjectSomeValuesFrom(property, targetClass);
 
 					if (wogroup.contains(lrel.getType())){
 						set.add(role);
@@ -446,15 +474,28 @@ public class RF2Parser {
 				HashSet<OWLClassExpression> setRoles = new HashSet<OWLClassExpression>();
 				listR=listLR.get(grp);
 				for (LightRelationship lrel:listR){
-
-					OWLClass targetClass = factory.getOWLClass(IRI.create(prefix + lrel.getTarget()));
-					OWLObjectProperty property= hashRoles.get(lrel.getType());
-					OWLClassExpression role=factory.getOWLObjectSomeValuesFrom(property, targetClass);
+					OWLClassExpression role;
+					if (useConcreteDomains &&
+							(lrel.getType().equals(732946004l) || lrel.getType().equals(732944001l) )) {
+						String value = concepts.get(lrel.getTarget()).getDefaultTerm().replaceAll("[^0-9?!\\.]","");
+						OWLDataProperty property= factory.getOWLDataProperty(IRI
+								.create("id/" + lrel.getType()));
+						role=factory.getOWLDataHasValue(property.asDataPropertyExpression(), factory.getOWLLiteral(Float.parseFloat(value)));
+					} else {
+						OWLClass targetClass = factory.getOWLClass(IRI.create("id/" + lrel.getTarget()));
+						OWLObjectProperty property= hashRoles.get(lrel.getType());
+						role=factory.getOWLObjectSomeValuesFrom(property, targetClass);
+					}
 					setRoles.add(role);
 				}
+				try{
 				OWLObjectIntersectionOf intersection=factory.getOWLObjectIntersectionOf(setRoles);
 				OWLClassExpression roleGroup=factory.getOWLObjectSomeValuesFrom(roleGroupProp, intersection);
 				set.add(roleGroup);
+				}catch (Exception e){
+					e.printStackTrace();
+					
+				}
 			}
 
 		}
@@ -469,23 +510,30 @@ public class RF2Parser {
 
 		hashRoles=new HashMap<Long,OWLObjectProperty>();
 		for(Long concept:attributes){
-			OWLObjectProperty property = factory.getOWLObjectProperty(IRI
-					.create(prefix + concept));	
-			OWLDeclarationAxiom declarationAxiom = factory
-					.getOWLDeclarationAxiom(property);
-			manager.addAxiom(ont, declarationAxiom);
-			if(rightIdent.containsKey(concept)){
-
-				long parentProp=rightIdent.get(concept);
-				OWLObjectProperty superProperty = factory.getOWLObjectProperty(IRI
-						.create(prefix + parentProp));
-				List<OWLObjectProperty> lProp=new ArrayList<OWLObjectProperty>();
-				lProp.add(property);
-				lProp.add(superProperty);
-				OWLSubPropertyChainOfAxiom chainAxiom = factory.getOWLSubPropertyChainOfAxiom(lProp, property);
-				manager.addAxiom(ont, chainAxiom);
+			if (useConcreteDomains && (concept.equals(732946004l) || concept.equals(732944001l))) {
+				OWLDataProperty property = factory.getOWLDataProperty(IRI
+						.create(prefix + concept));
+				OWLDeclarationAxiom declarationAxiom = factory
+						.getOWLDeclarationAxiom(property);
+				manager.addAxiom(ont, declarationAxiom);
+			} else {
+				OWLObjectProperty property = factory.getOWLObjectProperty(IRI
+						.create(prefix + concept));
+				OWLDeclarationAxiom declarationAxiom = factory
+						.getOWLDeclarationAxiom(property);
+				manager.addAxiom(ont, declarationAxiom);
+				if(rightIdent.containsKey(concept)){
+					long parentProp=rightIdent.get(concept);
+					OWLObjectProperty superProperty = factory.getOWLObjectProperty(IRI
+							.create(prefix + parentProp));
+					List<OWLObjectProperty> lProp=new ArrayList<OWLObjectProperty>();
+					lProp.add(property);
+					lProp.add(superProperty);
+					OWLSubPropertyChainOfAxiom chainAxiom = factory.getOWLSubPropertyChainOfAxiom(lProp, property);
+					manager.addAxiom(ont, chainAxiom);
+				}
+				hashRoles.put(concept, property);
 			}
-			hashRoles.put(concept, property);
 		}
 		getDescendantsRoles(attributes);
 	}
@@ -545,7 +593,8 @@ public class RF2Parser {
 					continue;
 				}
 				String[] columns = line.split("\\t");
-				if ( columns[2].equals("1") && !columns[3].equals(METADATA_MODULE)){
+//				if ( columns[2].equals("1") && !columns[3].equals(METADATA_MODULE)){
+					if ( columns[2].equals("1")){
 					ConceptDescriptor loopConcept = new ConceptDescriptor();
 					Long conceptId = Long.parseLong(columns[0]);
 					loopConcept.setConceptId(conceptId);
@@ -588,9 +637,11 @@ public class RF2Parser {
 					continue;
 				}
 				String[] columns = line.split("\\t");
-				if (Long.parseLong(columns[7])!=ISARELATIONSHIPTYPEID 
-						&& columns[2].equals("1")
-						&& !columns[3].equals(METADATA_MODULE)){
+//				if (Long.parseLong(columns[7])!=ISARELATIONSHIPTYPEID 
+//						&& columns[2].equals("1")
+//						&& !columns[3].equals(METADATA_MODULE)){
+					if (Long.parseLong(columns[7])!=ISARELATIONSHIPTYPEID 
+							&& columns[2].equals("1")){
 					Long sourceId = Long.parseLong(columns[4]);
 					ConceptDescriptor concept = concepts.get(sourceId);
 					if (concept!=null && !concept.getModule().equals(Long.parseLong(columns[3]))){
@@ -662,7 +713,8 @@ public class RF2Parser {
 						&& columns[2].equals("1")){
 					Long sourceId = Long.parseLong(columns[4]);
 					ConceptDescriptor concept = concepts.get(sourceId);
-					if (concept!=null && !concept.getModule().equals(Long.parseLong(columns[3]))){
+//					if (concept!=null && !concept.getModule().equals(Long.parseLong(columns[3]))){
+					if (concept==null){
 						continue;
 					}
 					LightRelationship loopRelationship = new LightRelationship();
