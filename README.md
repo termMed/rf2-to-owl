@@ -1,19 +1,6 @@
 # RF2 to OWL
 
-This project uses the OWLApi to create an OWL ontology, in RDF/XML format, based on the content of standard SNOMED CT RF2 files. As a starting point, the conversion only covers the minimal content required to load the SNOMED CT stated form into an OWL ontology (e.g. synonyms, language refsets, etc. are not represented) to then save it or classify it. The heuristics are based on the Perl transformation script originally developed by Kent Spackman and currently maintained by IHTSDO at the [SNOMED to OWL GitHub repository] (https://github.com/IHTSDO/snomed2owl)
-
-The output of both PERL and Java processing is identical when axioms are compared (excluding annotations), and the classification results are also identical between them and when compared with the official SNOMED International Edition release. Output was classified using [ELK reasoner] (https://github.com/liveontologies/elk-reasoner).
-
-In future iterations, we expect revisions will be made based on ongoing IHTSDO efforts towards standardizing the transformation process, the current status is just trying to reach semantic equivalency between the PERL and the Java scripts.
-
-In particular, significant changes are expected on the following areas:
-* Annotations (Preferred terms, alternative descriptions, etc.)
-* Revise header/declarations
-* Revise concept identifier usage (IRIs)
-* Remove special handling of attributes inherited from PERL script
-* Parameters to handle different serialization formats
-
-Current state has only been tested with SNOMED CT International Edition core distribution (July 2015/January 2016). Extension management, ontology imports, etc. would require consensus building.
+This project uses the OWLApi to create an OWL ontology, in RDF/XML format, based on the content of standard SNOMED CT RF2 files.
 
 ## Build instructions
 
@@ -29,13 +16,16 @@ Binaries are also available in the releases section of the [github repository](h
 
 Run the executable from the command line, for example:
 
-`java -jar owl-test-x.x.x-SNAPSHOT-jar-with-dependencies.jar /folder/sct2_Concept_Snapshot_INT_20150131.txt /folder/sct2_StatedRelationship_Snapshot_INT_20150131.txt /folder/outputFile.owl http://snomed.org/`
+`java -jar owl-test-x.x.x-SNAPSHOT-jar-with-dependencies.jar /folder/sct2_Concept_Snapshot_INT_20150131.txt /folder/sct2_StatedRelationship_Snapshot_INT_20150131.txt /folder/sct2_Description_Snapshot_INT_20150131.txt /folder/der2_cRefset_LanguageSnapshot-en_INT_20150131 /folder/outputFile.owl http://snomed.org/ TRUE`
 
 Parameters (in this order):
  * Path to RF2 Concepts Snapshot file
  * Path to RF2 Stated Relationships Snapshot file
+ * Path to RF2 Stated Descriptons Snapshot file
+ * Path to RF2 Stated Language Refset Snapshot file
  * Path to output file (it will be created or replaced by this process)
  * IRI for the resulting ontology
+ * Boolean value to enable transformation of to concrete domains (Data Properties) ("TRUE"/"FALSE")
 
 ## About the conversion
 
@@ -44,9 +34,28 @@ Parameters (in this order):
  * Class declarations for all concepts
  * SubclassOf or EquivalentClass Axioms for the concept definitions
  * ObjectProperty declarations, including SubPropertyOf for Role hierarchies
- * Non groupable attributes are managed in a special way to ensure they are never in a Relationship Group
+ * Non groupable attributes are managed in a special way to nerver add them in a Relationship Group
    * *Part of*
    * *Has active ingredient*
    * *Laterality*
    * *Has dose form*
  * A sub-property chain is created between *Direct substance* and *Has active ingredient*
+ 
+## Concrete domains conversion
+ 
+ Since the July 2017 release of the international edition, some relationships that specify numerical values are 
+ represented using concepts for the example:
+
+ * Source: 318420003 | Product containing atenolol 50 mg/1 each oral tablet (virtual clinical drug) |
+ * Attribute: 732947008 | Has presentation strength denominator unit (attribute) |
+ * Destination: 732774003 | 50 (qualifier value) |
+
+ If the "Concrete domains conversion" parameter is sent as "TRUE", those relationships are converted into OWL Data 
+ Properties, instead of the normal OWL Object Properties. Classification results should be identical, but having 
+ actual values instead of concept references may allow for more detailed queries and computations.
+ 
+ Attributes that are currently converted as data properties:
+ 
+ * 732944001 | Has presentation strength numerator value (attribute) | - DataType: float
+ * 732947008 | Has presentation strength denominator unit (attribute) | - DataType: float
+
