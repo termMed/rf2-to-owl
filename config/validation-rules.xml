@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<files>
+		<file>
+			<fileType>rf2-concepts</fileType>
+			<headerRule>
+				<regex>id\\teffectiveTime\\tactive\\tmoduleId\\tdefinitionStatusId$</regex>
+			</headerRule>
+		</file>
+		<file>
+			<fileType>rf2-descriptions</fileType>
+			<headerRule>
+				<regex>id\\teffectiveTime\\tactive\\tmoduleId\\tconceptId\\tlanguageCode\\ttypeId\\tterm\\tcaseSignificanceId$</regex>
+			</headerRule>
+		</file>
+		<file>
+			<fileType>rf2-language</fileType>
+			<headerRule>
+				<regex>id\\teffectiveTime\\tactive\\tmoduleId\\tref[sS]etId\\treferencedComponentId\\tacceptabilityId$</regex>
+			</headerRule>
+		</file>
+		<file>
+			<fileType>rf2-textDefinition</fileType>
+			<headerRule>
+				<regex>id\\teffectiveTime\\tactive\\tmoduleId\\tconceptId\\tlanguageCode\\ttypeId\\tterm\\tcaseSignificanceId$</regex>
+			</headerRule>
+		</file>
+		<file>
+			<fileType>rf2-relationships</fileType>
+			<headerRule>
+				<regex>id\\teffectiveTime\\tactive\\tmoduleId\\tsourceId\\tdestinationId\\trelationshipGroup\\ttypeId\\tcharacteristicTypeId\\tmodifierId$</regex>
+			</headerRule>
+		</file>
+	</files>
+</config>
