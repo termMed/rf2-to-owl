@@ -33,7 +33,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
+import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
@@ -50,6 +51,8 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
 import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
+import org.semanticweb.owlapi.model.PrefixManager;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
@@ -296,7 +299,7 @@ public class RF2Parser {
 // Manchester sintax process*********************************
 
 		
-		manager.saveOntology(ont, new RDFXMLOntologyFormat(), documentIRI);
+		manager.saveOntology(ont, new OWLXMLDocumentFormat(), documentIRI);
 		manager.removeOntology(ont);
 		System.gc();
 
@@ -326,7 +329,7 @@ public class RF2Parser {
 				while ((line=br.readLine())!=null){
 					spl=line.split("\t",-1);
 					if (spl[2].equals("1") && spl[4].equals(EN_LANGUAGE_REFSET) ){
-
+							
 						lang.put(Long.parseLong(spl[5]),(spl[6].equals(PREFERRED_ACCEPTABILITY)?shortPreferred:shortAcceptable));
 					}
 				}
@@ -339,8 +342,11 @@ public class RF2Parser {
 				while ((line=br.readLine())!=null){
 					spl=line.split("\t",-1);
 					did=Long.parseLong(spl[0]);
-					if (spl[2].equals("1") 
-							&& lang.containsKey(did)){
+//					if (spl[2].equals("1") 
+//							&& lang.containsKey(did) ){
+						if (spl[2].equals("1") 
+								&& lang.containsKey(did) 
+								&&  spl[6].equals(FSN_TYPE)){
 
 						cid=Long.parseLong(spl[4]);
 						if ( concepts.containsKey(cid) || hashRoles.containsKey(cid)){
@@ -376,6 +382,8 @@ public class RF2Parser {
 				}
 				br.close();
 				if (textDefinition!=null ){
+					DefaultPrefixManager pm=new DefaultPrefixManager();
+					pm.setDefaultPrefix("TextDefinition.term");
 					File txtDFile = new File(textDefinition);
 					if (txtDFile.exists() && txtDFile.exists()){
 						br = new BufferedReader(new InputStreamReader(new FileInputStream(txtDFile), "UTF8"));
@@ -394,7 +402,7 @@ public class RF2Parser {
 									OWLDatatypeImpl dtt=new OWLDatatypeImpl(OWL2Datatype.RDF_PLAIN_LITERAL.getIRI());
 									OWLAnnotationProperty propA ;
 									if ( spl[6].equals(TEXT_DEFINITION_TYPE)){
-										propA = factory.getOWLAnnotationProperty("sctf:","TextDefinition.term");
+										propA = factory.getOWLAnnotationProperty("sctf:",pm);
 									}else{
 										continue;
 									}
@@ -452,9 +460,14 @@ public class RF2Parser {
 					OWLClassExpression role=factory.getOWLObjectSomeValuesFrom(property, targetClass);
 					setRoles.add(role);
 				}
+				try{
 				OWLObjectIntersectionOf intersection=factory.getOWLObjectIntersectionOf(setRoles);
 				OWLClassExpression roleGroup=factory.getOWLObjectSomeValuesFrom(roleGroupProp, intersection);
 				set.add(roleGroup);
+				}catch (Exception e){
+					e.printStackTrace();
+					
+				}
 			}
 
 		}
@@ -545,7 +558,8 @@ public class RF2Parser {
 					continue;
 				}
 				String[] columns = line.split("\\t");
-				if ( columns[2].equals("1") && !columns[3].equals(METADATA_MODULE)){
+//				if ( columns[2].equals("1") && !columns[3].equals(METADATA_MODULE)){
+					if ( columns[2].equals("1")){
 					ConceptDescriptor loopConcept = new ConceptDescriptor();
 					Long conceptId = Long.parseLong(columns[0]);
 					loopConcept.setConceptId(conceptId);
@@ -588,9 +602,11 @@ public class RF2Parser {
 					continue;
 				}
 				String[] columns = line.split("\\t");
-				if (Long.parseLong(columns[7])!=ISARELATIONSHIPTYPEID 
-						&& columns[2].equals("1")
-						&& !columns[3].equals(METADATA_MODULE)){
+//				if (Long.parseLong(columns[7])!=ISARELATIONSHIPTYPEID 
+//						&& columns[2].equals("1")
+//						&& !columns[3].equals(METADATA_MODULE)){
+					if (Long.parseLong(columns[7])!=ISARELATIONSHIPTYPEID 
+							&& columns[2].equals("1")){
 					Long sourceId = Long.parseLong(columns[4]);
 					ConceptDescriptor concept = concepts.get(sourceId);
 					if (concept!=null && !concept.getModule().equals(Long.parseLong(columns[3]))){
@@ -662,7 +678,8 @@ public class RF2Parser {
 						&& columns[2].equals("1")){
 					Long sourceId = Long.parseLong(columns[4]);
 					ConceptDescriptor concept = concepts.get(sourceId);
-					if (concept!=null && !concept.getModule().equals(Long.parseLong(columns[3]))){
+//					if (concept!=null && !concept.getModule().equals(Long.parseLong(columns[3]))){
+					if (concept==null){
 						continue;
 					}
 					LightRelationship loopRelationship = new LightRelationship();
