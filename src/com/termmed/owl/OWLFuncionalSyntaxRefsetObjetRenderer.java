@@ -27,6 +27,7 @@ import org.semanticweb.owlapi.util.AnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.util.EscapeUtils;
 import org.semanticweb.owlapi.vocab.OWLXMLVocabulary;
+import uk.ac.manchester.cs.owl.owlapi.OWLEquivalentClassesAxiomImpl;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -44,7 +45,7 @@ import static org.semanticweb.owlapi.vocab.OWLXMLVocabulary.*;
 /**
  * Created by alo on 4/17/17.
  */
-public class FuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
+public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
 
     class AxiomRetriever implements OWLEntityVisitorEx<Stream<? extends OWLAxiom>> {
 
@@ -87,6 +88,9 @@ public class FuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
     private boolean writeEntitiesAsURIs = true;
     private boolean addMissingDeclarations = true;
     protected AnnotationValueShortFormProvider labelMaker = null;
+    private String rootSctid = "138875005";
+    private String moduleId = "900000000000207008";
+    private String refsetId = "733073007";
 
     /**
      * @param ontology
@@ -94,7 +98,7 @@ public class FuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
      * @param writer
      *        the writer
      */
-    public FuncionalSyntaxRefsetObjetRenderer(OWLOntology ontology, Writer writer) {
+    public OWLFuncionalSyntaxRefsetObjetRenderer(OWLOntology ontology, Writer writer) {
         ont = ontology;
         this.writer = writer;
         defaultPrefixManager = new DefaultPrefixManager();
@@ -147,6 +151,7 @@ public class FuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
     }
 
     protected void writePrefix(String prefix, String namespace) {
+        writeRefsetColumns(refsetId, rootSctid, moduleId);
         write("Prefix");
         writeOpenBracket();
         write(prefix);
@@ -202,29 +207,30 @@ public class FuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
 
     @Override
     public void visit(OWLOntology ontology) {
+        writeRefsetHeader();
         writePrefixes();
-        writeReturn();
-        writeReturn();
-        write(ONTOLOGY);
-        writeOpenBracket();
-        if (!ontology.isAnonymous()) {
-            writeFullIRI(ontology.getOntologyID().getOntologyIRI().get());
-            Optional<IRI> versionIRI = ontology.getOntologyID().getVersionIRI();
-            if (versionIRI.isPresent()) {
-                writeReturn();
-                writeFullIRI(versionIRI.get());
-            }
-            writeReturn();
-        }
-        ontology.importsDeclarations().forEach(decl -> {
-            write(IMPORT);
-            writeOpenBracket();
-            writeFullIRI(decl.getIRI());
-            writeCloseBracket();
-            writeReturn();
-        });
+        //writeReturn();
+        //writeReturn();
+        //write(ONTOLOGY);
+        //writeOpenBracket();
+//        if (!ontology.isAnonymous()) {
+//            writeFullIRI(ontology.getOntologyID().getOntologyIRI().get());
+//            Optional<IRI> versionIRI = ontology.getOntologyID().getVersionIRI();
+//            if (versionIRI.isPresent()) {
+//                writeReturn();
+//                writeFullIRI(versionIRI.get());
+//            }
+//            writeReturn();
+//        }
+//        ontology.importsDeclarations().forEach(decl -> {
+//            write(IMPORT);
+//            writeOpenBracket();
+//            writeFullIRI(decl.getIRI());
+//            writeCloseBracket();
+//            writeReturn();
+//        });
         sortOptionally(ontology.annotations()).forEach(this::acceptAndReturn);
-        writeReturn();
+//        writeReturn();
         Set<OWLAxiom> writtenAxioms = new HashSet<>();
         List<OWLEntity> signature = sortOptionally(ontology.signature());
         Collection<IRI> illegals = OWLDocumentFormat.determineIllegalPunnings(addMissingDeclarations, signature
@@ -251,7 +257,7 @@ public class FuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
         List<? extends OWLEntity> sortOptionally = sortOptionally(entities);
         if (!sortOptionally.isEmpty()) {
             writeEntities(bannerComment, entityTypeName, sortOptionally, writtenAxioms);
-            writeReturn();
+            //writeReturn();
         }
     }
 
@@ -272,10 +278,10 @@ public class FuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
                 continue;
             }
             if (!haveWrittenBanner) {
-                writeln("############################");
-                writeln("#   " + comment);
-                writeln("############################");
-                writeReturn();
+                //writeln("############################");
+                //writeln("#   " + comment);
+                //writeln("############################");
+                //writeReturn();
                 haveWrittenBanner = true;
             }
             writeEntity2(owlEntity, entityTypeName, sortOptionally(axiomsForEntity), sortOptionally(list),
@@ -316,12 +322,12 @@ public class FuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
 
     protected void writeEntity2(OWLEntity entity, String entityTypeName, List<? extends OWLAxiom> axiomsForEntity,
                                 List<OWLAnnotationAssertionAxiom> annotationAssertionAxioms, Set<OWLAxiom> alreadyWrittenAxioms) {
-        writeln("# " + entityTypeName + ": " + getIRIString(entity) + " (" + getEntityLabel(entity) + ")");
-        writeReturn();
+        //writeln("# " + entityTypeName + ": " + getIRIString(entity) + " (" + getEntityLabel(entity) + ")");
+        //writeReturn();
         annotationAssertionAxioms.stream().filter(alreadyWrittenAxioms::add).forEach(this::acceptAndReturn);
         axiomsForEntity.stream().filter(this::shouldWrite).filter(alreadyWrittenAxioms::add).forEach(
                 this::acceptAndReturn);
-        writeReturn();
+        //writeReturn();
     }
 
     private boolean shouldWrite(OWLAxiom ax) {
@@ -466,11 +472,63 @@ public class FuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
         write("\n");
     }
 
+    protected void writeRefsetColumns(String refsetId, String referencedComponentId, String moduleId) {
+        String row = UUID.randomUUID() + "\t" +
+                "20170731" + "\t1\t" + moduleId + "\t" +
+                refsetId + "\t" + referencedComponentId + "\t";
+        write(row);
+    }
+
     protected void writeAnnotations(OWLAxiom ax) {
         ax.annotations().forEach(this::acceptAndSpace);
     }
 
+    protected void writeRefsetHeader() {
+        String row = "UUID\teffectiveTime\tactive\tmoduleId\trefsetId\treferencedComponentId\tannotation";
+        write(row);
+        writeReturn();
+    }
+
     protected void writeAxiomStart(OWLXMLVocabulary v, OWLAxiom axiom) {
+        if (axiom.isOfType(AxiomType.DECLARATION)) {
+            OWLDeclarationAxiom da = (OWLDeclarationAxiom) axiom;
+            String referencedComponentId = rootSctid;
+            try {
+                referencedComponentId = new Scanner(da.getEntity().toStringID()).useDelimiter("\\D+").next();
+            } catch (Exception e) {
+                // No id in the identity
+            }
+            writeRefsetColumns(refsetId, referencedComponentId, moduleId);
+        } else if (axiom.isOfType(AxiomType.ANNOTATION_ASSERTION)) {
+            OWLAnnotationAssertionAxiom da = (OWLAnnotationAssertionAxiom) axiom;
+            String referencedComponentId = rootSctid;
+            try {
+                referencedComponentId = new Scanner(da.getSubject().asIRI().toString()).useDelimiter("\\D+").next();
+            } catch (Exception e) {
+                // No id in the identity
+            }
+            writeRefsetColumns(refsetId, referencedComponentId, moduleId);
+        } else if (axiom.isOfType(AxiomType.EQUIVALENT_CLASSES)){
+            OWLEquivalentClassesAxiom da = (OWLEquivalentClassesAxiom) axiom;
+            String referencedComponentId = rootSctid;
+            try {
+                referencedComponentId = new Scanner(da.namedClasses().findFirst().toString()).useDelimiter("\\D+").next();
+            } catch (Exception e) {
+                // No id in the identity
+            }
+            writeRefsetColumns(refsetId, referencedComponentId, moduleId);
+        } else if (axiom.isOfType(AxiomType.SUBCLASS_OF)){
+            OWLSubClassOfAxiom da = (OWLSubClassOfAxiom) axiom;
+            String referencedComponentId = rootSctid;
+            try {
+                referencedComponentId = new Scanner(da.getSubClass().toString()).useDelimiter("\\D+").next();
+            } catch (Exception e) {
+                // No id in the identity
+            }
+            writeRefsetColumns(refsetId, referencedComponentId, moduleId);
+        } else {
+            writeRefsetColumns(refsetId, rootSctid, moduleId);
+        }
         write(v);
         writeOpenBracket();
         writeAnnotations(axiom);
