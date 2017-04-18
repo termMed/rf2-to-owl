@@ -121,7 +121,7 @@ can be passed using the arguments described in the arguments help.
   java -jar rf2-to-owl-x.x.x-SNAPSHOT-jar-with-dependencies.jar -mode refset-to-owl -orf owlRefset.txt -output ontology.owl
   ```
   
-  * *-mode*: sets the mode to "owl-to-refset"
+  * *-mode*: sets the mode to "refset-to-owl"
   * *-orf*: path to the OWL Refset file
   * *-output*: the output file where the ontology will be generated
 
