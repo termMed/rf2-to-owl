@@ -101,7 +101,7 @@ can be passed using the arguments described in the arguments help.
  * 732944001 | Has presentation strength numerator value (attribute) | - DataType: float
  * 732947008 | Has presentation strength denominator unit (attribute) | - DataType: float
  
- ## OWL Ontology file to RF2 OWL Refset file conversion
+## OWL Ontology file to RF2 OWL Refset file conversion
  
  Arguments required for this mode:
  
@@ -113,7 +113,7 @@ can be passed using the arguments described in the arguments help.
  * *-of*: path to the ontology file
  * *-output*: the output file where the refset will be generated
  
- ## RF2 OWL Refset file ot OWL Ontology file conversion
+## RF2 OWL Refset file ot OWL Ontology file conversion
   
   Arguments required for this mode:
   
