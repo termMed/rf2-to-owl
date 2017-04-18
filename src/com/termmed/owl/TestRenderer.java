@@ -41,8 +41,8 @@ public class TestRenderer {
     public static void main(String[] args) throws Exception {
         startTime = System.currentTimeMillis();
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-//        File testOntology = new File("/Users/alo/Downloads/termspace-owl (39).xml");
-        File testOntology = new File("/Users/alo/Downloads/conceptsOwlComplete-cd-alo.xml");
+        File testOntology = new File("/Users/alo/Downloads/termspace-owl (39).xml");
+//        File testOntology = new File("/Users/alo/Downloads/conceptsOwlComplete-cd-alo.xml");
         System.out.println("testOntology: " + testOntology.getName());
         OWLOntology ontology = manager.loadOntologyFromOntologyDocument(testOntology);
         System.out.println("Terminology loaded in: " + (System.currentTimeMillis() - startTime) + " ms.");

@@ -33,25 +33,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.semanticweb.owlapi.apibinding.OWLFunctionalSyntaxFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
+import org.semanticweb.owlapi.formats.OWLXMLDocumentFormatFactory;
+import org.semanticweb.owlapi.functional.renderer.OWLFunctionalSyntaxRenderer;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
@@ -161,7 +149,7 @@ public class RF2Parser {
 
 	private Boolean useConcreteDomains;
 
-	private Boolean generateOwlRefset;
+	private String owlSyntax;
 
 	/**
 	 * Instantiates a new r f2 parser.
@@ -174,11 +162,11 @@ public class RF2Parser {
 	 * @param outputFile the output file
 	 * @param iri the iri
 	 * @param useConcreteDomains whether to use concrete domains
-	 * @param generateOwlRefset whether to generate Owl Refset
+	 * @param owlSyntax OWL Syntax
 	 */
 	public RF2Parser(String conceptFile, String relationshipFile, String descriptionFile,
 			String textDefinitionFile,String languageFile,
-			String outputFile, String iri, Boolean useConcreteDomains, boolean generateOwlRefset) {
+			String outputFile, String iri, Boolean useConcreteDomains, String owlSyntax) {
 		super();
 		this.conceptFile = conceptFile;
 		this.relationshipFile = relationshipFile;
@@ -186,7 +174,7 @@ public class RF2Parser {
 		this.textDefinitionFile=textDefinitionFile;
 		this.languageFile=languageFile;
 		this.useConcreteDomains=useConcreteDomains;
-		this.generateOwlRefset = generateOwlRefset;
+		this.owlSyntax = owlSyntax;
 
 		this.outputFile = outputFile;
 		this.prefix=iri;
@@ -204,7 +192,7 @@ public class RF2Parser {
 
 	}
 	public RF2Parser(String inputFolder,
-			String outputFile, String iri, Boolean useConcreteDomains, boolean generateOwlRefset) {
+			String outputFile, String iri, Boolean useConcreteDomains, String owlSyntax) {
 		super();
 		try {
 			this.conceptFile = FileHelper.getFile( new File(inputFolder), "rf2-concepts",null,null,null);
@@ -213,7 +201,7 @@ public class RF2Parser {
 			this.relationshipFile = FileHelper.getFile( new File(inputFolder), "rf2-relationships",null,"stated",null);
 			this.textDefinitionFile=FileHelper.getFile( new File(inputFolder), "rf2-textDefinition",null,null,null);
 			this.useConcreteDomains=useConcreteDomains;
-			this.generateOwlRefset = generateOwlRefset;
+			this.owlSyntax = owlSyntax;
 
 			this.outputFile = outputFile;
 			this.prefix=iri;
@@ -309,10 +297,6 @@ public class RF2Parser {
 			}
 		}
 
-		File f = new File(outputFile);
-		IRI documentIRI = IRI.create(f);
-
-
 		//		Set<OWLAxiom> axioms = ont.getAxioms();
 		//		HashSet<String> axClasses = new HashSet<String>();
 		//		for (OWLAxiom axiom:axioms){
@@ -338,15 +322,34 @@ public class RF2Parser {
 		//		manager.saveOntology(ont, manSyntDocFormat,documentIRI);
 		// Manchester sintax process*********************************
 
-
-		manager.saveOntology(ont, new OWLXMLDocumentFormat(), documentIRI);
-		if (this.generateOwlRefset) {
-			RF2OwlRefsetRenderer refsetRenderer = new RF2OwlRefsetRenderer();
-			PrintWriter refsetWriter = new PrintWriter("owlRefset.txt", "UTF-8");
-			refsetRenderer.render(ont, refsetWriter);
-			refsetWriter.close();
+		File f = new File(outputFile);
+		IRI documentIRI = IRI.create(f);
+		switch (owlSyntax) {
+			case "manchester":
+				OWLDocumentFormat format = manager.getOntologyFormat(ont);
+				ManchesterSyntaxDocumentFormat manSyntDocFormat=new ManchesterSyntaxDocumentFormat();
+				format.isPrefixOWLDocumentFormat();
+				if(format.isPrefixOWLDocumentFormat()) {
+					manSyntDocFormat.copyPrefixesFrom(format.asPrefixOWLDocumentFormat());
+				}
+				manager.setOntologyFormat(ont, manSyntDocFormat);
+				manager.saveOntology(ont, manSyntDocFormat,documentIRI);
+				break;
+			case "owlxml":
+				manager.saveOntology(ont, new OWLXMLDocumentFormat(), documentIRI);
+				break;
+			case "functional":
+				PrintWriter writer2 = new PrintWriter(outputFile, "UTF-8");
+				OWLFunctionalSyntaxRenderer fr = new OWLFunctionalSyntaxRenderer();
+				fr.render(ont,writer2);
+				writer2.close();
+				break;
+			default:
+				throw new IllegalArgumentException("Syntax not supported: " + owlSyntax);
 		}
 		manager.removeOntology(ont);
+		System.out.println("");
+		System.out.println("OWL Ontology saved in " + f.getName());
 		System.gc();
 
 	}
@@ -460,7 +463,8 @@ public class RF2Parser {
 									OWLDatatypeImpl dtt=new OWLDatatypeImpl(OWL2Datatype.RDF_PLAIN_LITERAL.getIRI());
 									OWLAnnotationProperty propA ;
 									if ( spl[6].equals(TEXT_DEFINITION_TYPE)){
-										propA = factory.getOWLAnnotationProperty("sctf:",pm);
+										//propA = factory.getOWLAnnotationProperty("sctf:",pm);
+										propA = factory.getOWLAnnotationProperty(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
 									}else{
 										continue;
 									}
