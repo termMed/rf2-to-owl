@@ -99,7 +99,8 @@ can be passed using the arguments described in the arguments help.
  Attributes that are currently converted as data properties:
  
  * 732944001 | Has presentation strength numerator value (attribute) | - DataType: float
- * 732947008 | Has presentation strength denominator unit (attribute) | - DataType: float
+ * 732946004 | Has presentation strength denominator value (attribute) | - DataType: float
+ 
  
 ## OWL Ontology file to RF2 OWL Refset file conversion
  
