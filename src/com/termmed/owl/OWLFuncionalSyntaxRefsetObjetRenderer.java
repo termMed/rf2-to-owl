@@ -20,14 +20,12 @@
 package com.termmed.owl;
 
 import org.semanticweb.owlapi.formats.PrefixDocumentFormat;
-import org.semanticweb.owlapi.functional.renderer.FunctionalSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.util.AnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.util.EscapeUtils;
 import org.semanticweb.owlapi.vocab.OWLXMLVocabulary;
-import uk.ac.manchester.cs.owl.owlapi.OWLEquivalentClassesAxiomImpl;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -89,8 +87,11 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
     private boolean addMissingDeclarations = true;
     protected AnnotationValueShortFormProvider labelMaker = null;
     private String rootSctid = "138875005";
+    private String generalConceptAxion = "733929006";
+    private String owlOntologyHeader = "734147008";
+    private String owlOntologyNamespace = "734146004";
     private String moduleId = "900000000000207008";
-    private String refsetId = "733073007";
+    private String owlAxiomRefset = "733073007";
 
     /**
      * @param ontology
@@ -151,7 +152,7 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
     }
 
     protected void writePrefix(String prefix, String namespace) {
-        writeRefsetColumns(refsetId, rootSctid, moduleId);
+        writeRefsetColumns(owlAxiomRefset, owlOntologyHeader, moduleId);
         write("Prefix");
         writeOpenBracket();
         write(prefix);
@@ -484,7 +485,7 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
     }
 
     protected void writeRefsetHeader() {
-        String row = "UUID\teffectiveTime\tactive\tmoduleId\trefsetId\treferencedComponentId\tannotation";
+        String row = "UUID\teffectiveTime\tactive\tmoduleId\towlAxiomRefset\treferencedComponentId\tannotation";
         write(row);
         writeReturn();
     }
@@ -498,7 +499,7 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
             } catch (Exception e) {
                 // No id in the identity
             }
-            writeRefsetColumns(refsetId, referencedComponentId, moduleId);
+            writeRefsetColumns(owlAxiomRefset, referencedComponentId, moduleId);
         } else if (axiom.isOfType(AxiomType.ANNOTATION_ASSERTION)) {
             OWLAnnotationAssertionAxiom da = (OWLAnnotationAssertionAxiom) axiom;
             String referencedComponentId = rootSctid;
@@ -507,27 +508,36 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
             } catch (Exception e) {
                 // No id in the identity
             }
-            writeRefsetColumns(refsetId, referencedComponentId, moduleId);
+            writeRefsetColumns(owlAxiomRefset, referencedComponentId, moduleId);
         } else if (axiom.isOfType(AxiomType.EQUIVALENT_CLASSES)){
             OWLEquivalentClassesAxiom da = (OWLEquivalentClassesAxiom) axiom;
-            String referencedComponentId = rootSctid;
+            String referencedComponentId = generalConceptAxion;
             try {
                 referencedComponentId = new Scanner(da.namedClasses().findFirst().toString()).useDelimiter("\\D+").next();
             } catch (Exception e) {
                 // No id in the identity
             }
-            writeRefsetColumns(refsetId, referencedComponentId, moduleId);
+            writeRefsetColumns(owlAxiomRefset, referencedComponentId, moduleId);
         } else if (axiom.isOfType(AxiomType.SUBCLASS_OF)){
             OWLSubClassOfAxiom da = (OWLSubClassOfAxiom) axiom;
-            String referencedComponentId = rootSctid;
+            String referencedComponentId = generalConceptAxion;
             try {
                 referencedComponentId = new Scanner(da.getSubClass().toString()).useDelimiter("\\D+").next();
             } catch (Exception e) {
                 // No id in the identity
             }
-            writeRefsetColumns(refsetId, referencedComponentId, moduleId);
+            writeRefsetColumns(owlAxiomRefset, referencedComponentId, moduleId);
+        } else if (axiom.isOfType(AxiomType.SUB_OBJECT_PROPERTY)){
+            OWLSubObjectPropertyOfAxiom so = (OWLSubObjectPropertyOfAxiom) axiom;
+            String referencedComponentId = rootSctid;
+            try {
+                referencedComponentId = new Scanner(so.getSubProperty().toString()).useDelimiter("\\D+").next();
+            } catch (Exception e) {
+                // No id in the identity
+            }
+            writeRefsetColumns(owlAxiomRefset, referencedComponentId, moduleId);
         } else {
-            writeRefsetColumns(refsetId, rootSctid, moduleId);
+            writeRefsetColumns(owlAxiomRefset, rootSctid, moduleId);
         }
         write(v);
         writeOpenBracket();
