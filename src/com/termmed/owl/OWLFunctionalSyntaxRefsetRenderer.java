@@ -19,7 +19,6 @@
 
 package com.termmed.owl;
 
-import org.semanticweb.owlapi.functional.renderer.FunctionalSyntaxObjectRenderer;
 import org.semanticweb.owlapi.io.AbstractOWLRenderer;
 import org.semanticweb.owlapi.io.OWLRendererException;
 import org.semanticweb.owlapi.io.OWLRendererIOException;
@@ -35,7 +34,7 @@ public class OWLFunctionalSyntaxRefsetRenderer extends AbstractOWLRenderer {
     @Override
     public void render(OWLOntology ontology, PrintWriter writer) throws OWLRendererException {
         try {
-            OWLFuncionalSyntaxRefsetObjetRenderer ren = new OWLFuncionalSyntaxRefsetObjetRenderer(ontology,
+            OWLFuncionalSyntaxRefsetObjectRenderer ren = new OWLFuncionalSyntaxRefsetObjectRenderer(ontology,
                     writer);
             ontology.accept(ren);
             writer.flush();

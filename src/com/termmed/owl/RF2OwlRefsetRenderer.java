@@ -32,9 +32,13 @@ import java.util.UUID;
 /**
  * Created by alo on 4/16/17.
  */
+@Deprecated
 public class RF2OwlRefsetRenderer {
-    private static OWLOntologyManager onologyManager = OWLManager.createOWLOntologyManager();
+    private static OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
     private static OWLFunctionalSyntaxRenderer functionalSyntaxRenderer = new OWLFunctionalSyntaxRenderer();
+
+    private String owlOntologyRefsetId = "762103008";
+    private String owlAxiomRefsetId = "733073007";
 
     public RF2OwlRefsetRenderer() {
         super();
@@ -48,19 +52,20 @@ public class RF2OwlRefsetRenderer {
         System.out.println("Declarations: " + ontology.axioms(AxiomType.DECLARATION).count());
         int count = 0;
         Iterator<OWLDeclarationAxiom> declarations = ontology.axioms(AxiomType.DECLARATION).iterator();
-        while(declarations.hasNext()) {
-            count++;
-            if (count == 1 || count % 10000 == 0) {
-                System.out.print(".");
-            }
-            OWLAxiom loopAxiom = declarations.next();
-            renderAxiom(loopAxiom, writer);
-        }
+        // Skipping declarations
+//        while(declarations.hasNext()) {
+//            count++;
+//            if (count == 1 || count % 10000 == 0) {
+//                System.out.print(".");
+//            }
+//            OWLAxiom loopAxiom = declarations.next();
+//            renderAxiom(loopAxiom, writer);
+//        }
         System.out.println("");
         System.out.println("OWLSubClassOfAxiom: " + ontology.axioms(AxiomType.SUBCLASS_OF).count());
         count = 0;
         Iterator<OWLSubClassOfAxiom> subclasses = ontology.axioms(AxiomType.SUBCLASS_OF).iterator();
-        while(declarations.hasNext()) {
+        while(subclasses.hasNext()) {
             count++;
             if (count == 1 || count % 10000 == 0) {
                 System.out.print(".");
@@ -72,7 +77,7 @@ public class RF2OwlRefsetRenderer {
         System.out.println("OWLEquivalentClassesAxiom: " + ontology.axioms(AxiomType.EQUIVALENT_CLASSES).count());
         count = 0;
         Iterator<OWLEquivalentClassesAxiom> equivalents = ontology.axioms(AxiomType.EQUIVALENT_CLASSES).iterator();
-        while(declarations.hasNext()) {
+        while(equivalents.hasNext()) {
             count++;
             if (count == 1 || count % 10000 == 0) {
                 System.out.print(".");
@@ -84,27 +89,24 @@ public class RF2OwlRefsetRenderer {
 
     private void renderAxiom(OWLAxiom axiom, Writer writer) throws OWLOntologyCreationException, OWLRendererException, IOException {
         OutputStream os = new ByteArrayOutputStream();
-        OWLOntology loopO = onologyManager.createOntology();
-        onologyManager.addAxiom(loopO, axiom);
+        OWLOntology loopO = ontologyManager.createOntology();
+        ontologyManager.addAxiom(loopO, axiom);
         functionalSyntaxRenderer.render(loopO,os);
         String ontologyText = os.toString();
         int bodyStart = ontologyText.indexOf(axiom.getAxiomType().getName());
         if (bodyStart > -1) {
             String body = ontologyText.substring(bodyStart, ontologyText.length()-2).trim();
-            String refsetId = "";
-            if (axiom.isOfType(AxiomType.ANNOTATION_ASSERTION)) {
-                refsetId = "733073007";
-            } else {
-                refsetId = "733073007";
+            String refsetId = owlAxiomRefsetId;
+            if (!axiom.isOfType(AxiomType.ANNOTATION_ASSERTION)) {
+                String referencedComponentId = new Scanner(body).useDelimiter("\\D+").next();
+                String moduleId = "900000000000207008";
+                String row = UUID.randomUUID() + "\t" +
+                        "20170731" + "\t1\t" + moduleId + "\t" +
+                        refsetId + "\t" + referencedComponentId + "\t" +
+                        body + "\n";
+                writer.write(row);
             }
-            String referencedComponentId = new Scanner(body).useDelimiter("\\D+").next();
-            String moduleId = "733073007";
-            String row = UUID.randomUUID() + "\t" +
-                    "20170731" + "\t1\t" + moduleId + "\t" +
-                    refsetId + "\t" + referencedComponentId + "\t" +
-                    body + "\n";
-            writer.write(row);
         }
-        onologyManager.removeOntology(loopO);
+        ontologyManager.removeOntology(loopO);
     }
 }

@@ -47,7 +47,7 @@ public class RefsetToOWLRenderer {
                 String axiom = spl[6];
                 if (!headerWritten && !axiom.startsWith("Prefix")) {
                     writer.write("\n");
-                    writer.write("Ontology(<http://www.termmed.com/ontologies/snomedct>\n");
+                    writer.write("Ontology(<http://snomed.org/snomedct>\n");
                     writer.write("\n");
                     headerWritten = true;
                 }

@@ -43,7 +43,7 @@ import static org.semanticweb.owlapi.vocab.OWLXMLVocabulary.*;
 /**
  * Created by alo on 4/17/17.
  */
-public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
+public class OWLFuncionalSyntaxRefsetObjectRenderer implements OWLObjectVisitor {
 
     class AxiomRetriever implements OWLEntityVisitorEx<Stream<? extends OWLAxiom>> {
 
@@ -92,6 +92,7 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
     private String owlOntologyNamespace = "734146004";
     private String moduleId = "900000000000207008";
     private String owlAxiomRefset = "733073007";
+    private String owlOntologyRefset = "762103008";
 
     /**
      * @param ontology
@@ -99,7 +100,7 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
      * @param writer
      *        the writer
      */
-    public OWLFuncionalSyntaxRefsetObjetRenderer(OWLOntology ontology, Writer writer) {
+    public OWLFuncionalSyntaxRefsetObjectRenderer(OWLOntology ontology, Writer writer) {
         ont = ontology;
         this.writer = writer;
         defaultPrefixManager = new DefaultPrefixManager();
@@ -152,7 +153,7 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
     }
 
     protected void writePrefix(String prefix, String namespace) {
-        writeRefsetColumns(owlAxiomRefset, owlOntologyHeader, moduleId);
+        writeRefsetColumns(owlOntologyRefset, owlOntologyHeader, moduleId);
         write("Prefix");
         writeOpenBracket();
         write(prefix);
@@ -401,8 +402,12 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
     }
 
     protected void acceptAndReturn(OWLObject ax) {
-        ax.accept(this);
-        writeReturn();
+        // Filtering out components not included in SNOMED RF2 OWL Refset
+        if (!(ax instanceof OWLDeclarationAxiom) &&
+                !(ax instanceof OWLAnnotationAssertionAxiom)) {
+            ax.accept(this);
+            writeReturn();
+        }
     }
 
     protected void acceptAndSpace(OWLObject ax) {
@@ -485,7 +490,7 @@ public class OWLFuncionalSyntaxRefsetObjetRenderer implements OWLObjectVisitor {
     }
 
     protected void writeRefsetHeader() {
-        String row = "UUID\teffectiveTime\tactive\tmoduleId\towlAxiomRefset\treferencedComponentId\tannotation";
+        String row = "UUID\teffectiveTime\tactive\tmoduleId\trefsetId\treferencedComponentId\tannotation";
         write(row);
         writeReturn();
     }
